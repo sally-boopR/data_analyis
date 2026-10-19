@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>가상기업 3개사 5개년 매출 데이터 분석 대시보드 (20대 심층 분석 기법)</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Chart.js 100% Local File (No External Data Transmission / Completely Offline Capable) -->
+  <script src="chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Top Header -->
+    <header class="dashboard-header">
+      <div class="header-brand">
+        <div class="logo-icon">📊</div>
+        <div class="header-title-group">
+          <h1>가상기업 3개사 5개년 매출 데이터 분석 대시보드</h1>
+          <p>
+            <span>분석 대상: 한빛테크 · 미래솔루션 · 새봄산업 (2021.01 ~ 2025.12, 60개월)</span>
+            <span class="badge-offline">🔒 로컬 100% 연산 · 외부 전송 없음</span>
+          </p>
+        </div>
+      </div>
+      <div class="header-controls">
+        <button id="themeToggleBtn" class="btn-ctrl" title="다크 / 라이트 테마 전환">
+          <span id="themeIcon">☀️</span> 테마 전환
+        </button>
+        <button id="printBtn" class="btn-ctrl" onclick="window.print()" title="보고서 인쇄 및 PDF 저장">
+          🖨️ 보고서 인쇄
+        </button>
+      </div>
+    </header>
+
+    <!-- Company Filter Bar -->
+    <div class="company-selector-bar">
+      <div class="selector-label">
+        <span>🏢 분석 대상 기업 포커스 :</span>
+      </div>
+      <div class="company-pills">
+        <button class="company-pill active" data-company="all">
+          <span class="pill-dot" style="background:#8B5CF6;"></span> 3개사 종합 비교
+        </button>
+        <button class="company-pill" data-company="한빛테크">
+          <span class="pill-dot" style="background:#3B82F6;"></span> 한빛테크 (고성장형)
+        </button>
+        <button class="company-pill" data-company="미래솔루션">
+          <span class="pill-dot" style="background:#10B981;"></span> 미래솔루션 (안정성장형)
+        </button>
+        <button class="company-pill" data-company="새봄산업">
+          <span class="pill-dot" style="background:#F59E0B;"></span> 새봄산업 (성숙/쇠퇴형)
+        </button>
+      </div>
+    </div>
+
+    <!-- Executive KPI Metric Cards -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-title">5개년 누적 시장 규모</span>
+          <span class="kpi-icon">💰</span>
+        </div>
+        <div class="kpi-value" id="kpiTotalMarket">1,807.5 억</div>
+        <div class="kpi-footer">
+          <span class="badge-trend-up">▲ 76.1%</span> 2021년 310.4억 → 2025년 418.6억 확대
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-title">시장 점유율 1위 역전</span>
+          <span class="kpi-icon">🏆</span>
+        </div>
+        <div class="kpi-value" id="kpiLeaderShare">한빛테크 46.8%</div>
+        <div class="kpi-footer">
+          <span class="badge-trend-up">▲ 10.9%p</span> 새봄산업(36.7%→24.7%) 제치고 독점화
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-title">최고 연평균 성장률 (CAGR)</span>
+          <span class="kpi-icon">🚀</span>
+        </div>
+        <div class="kpi-value" id="kpiMaxCagr">+15.20%</div>
+        <div class="kpi-footer">
+          <span>한빛테크(+15.2%) vs 미래(+8.7%) vs 새봄(-2.4%)</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-title">시장 집중도 (HHI)</span>
+          <span class="kpi-icon">⚖️</span>
+        </div>
+        <div class="kpi-value" id="kpiHhi">3,680 pt</div>
+        <div class="kpi-footer">
+          <span class="badge-trend-up">▲ 259 pt</span> 과점 시장(>2,500) 내 1강 체제 굳힘
+        </div>
+      </div>
+    </section>
+
+    <!-- Category Navigation Tabs -->
+    <nav class="category-nav">
+      <button class="nav-tab-btn active" data-tab="tab-overview">
+        🌟 경영진 요약 <span class="tab-count">Overview</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="tab-cat1">
+        📊 1. 기초통계 & 종합성과 <span class="tab-count">Tech 01~04</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="tab-cat2">
+        📈 2. 추세평활 & 시계열분해 <span class="tab-count">Tech 05~08</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="tab-cat3">
+        🗓️ 3. 계절성 & 주기성 분석 <span class="tab-count">Tech 09~12</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="tab-cat4">
+        🔄 4. 기업비교 & 시장구조 <span class="tab-count">Tech 13~16</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="tab-cat5">
+        ⚠️ 5. 리스크 & 이상치 탐지 <span class="tab-count">Tech 17~18</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="tab-cat6">
+        🔮 6. 예측모델 & 미래시나리오 <span class="tab-count">Tech 19~20</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="tab-strategy">
+        📑 종합 전략 리포트 <span class="tab-count">Report</span>
+      </button>
+    </nav>
+
+    <!-- =====================================================================
+         TAB: OVERVIEW (EXECUTIVE SUMMARY)
+         ===================================================================== -->
+    <section id="tab-overview" class="tab-content-section active">
+      <div class="section-intro-banner">
+        <h2>🌟 5개년 3개 가상기업 매출 데이터 분석 프레임워크 총람</h2>
+        <p>본 대시보드는 2021년 1월부터 2025년 12월까지 60개월간 수집된 한빛테크, 미래솔루션, 새봄산업의 월간 매출 데이터를 바탕으로, 통계학·시계열 공학·계량경제학·경영분석의 핵심 기법 20가지를 엄밀하게 적용하여 시각화하고 심층적인 사업 인사이트를 제공합니다.</p>
+      </div>
+
+      <!-- Main Overview Chart: 5-Year Monthly Revenue Trend -->
+      <div class="tech-card" style="margin-bottom: 24px;">
+        <div class="tech-card-header">
+          <div class="tech-title-wrap">
+            <span class="tech-num-badge">MASTER VIEW</span>
+            <h3>60개월 전체 매출 추이 및 3개사 성장 궤적 비교 (2021.01 ~ 2025.12)</h3>
+            <span class="tech-subtitle">월별 실제 매출액(억원) 시계열 곡선 및 기업별 포지셔닝 변화</span>
+          </div>
+          <span class="tech-formula-tag">Unit: 억원 (100M KRW)</span>
+        </div>
+        <div class="chart-container extra-tall">
+          <canvas id="chartMasterTrend"></canvas>
+        </div>
+        <div class="tech-insight-box">
+          <div class="insight-item">
+            <span class="insight-tag tag-finding">핵심 발견</span>
+            <strong>3개 기업의 뚜렷한 세 가지 성장 경로:</strong> 한빛테크는 초기 8.59억에서 2025년 말 18.27억으로 2.1배 이상 고성장(연평균 15.2%), 미래솔루션은 7.10억에서 11.80억으로 연평균 8.7% 안정적 우상향, 새봄산업은 2021년 1위(10.15억)였으나 8~10억 수준으로 정체 및 완만한 역성장(CAGR -2.35%)을 기록했습니다.
+          </div>
+          <div class="insight-item">
+            <span class="insight-tag tag-meaning">통계적 해석</span>
+            <strong>성장과 계절성의 중첩:</strong> 한빛테크는 강력한 양의 기울기를 가진 선형 추세 위에 매년 3~5월 봄철 피크가 중첩되고, 새봄산업은 완만한 음의 기울기 위에 11~1월 겨울철 피크가 작용하여 상반된 계절적 특성을 보입니다.
+          </div>
+          <div class="insight-item">
+            <span class="insight-tag tag-action">전략적 시사점</span>
+            <strong>2022년 중반 골든크로스 이후 시장 재편:</strong> 한빛테크가 규모의 경제를 바탕으로 업계 표준을 장악해 가고 있으며, 새봄산업은 주력 제품군의 노후화로 인해 신규 시장 진입이나 사업 재편이 시급한 상황입니다.
+          </div>
+        </div>
+      </div>
+
+      <!-- 20 Techniques Matrix Card -->
+      <div class="tech-card">
+        <div class="tech-card-header">
+          <div class="tech-title-wrap">
+            <span class="tech-num-badge">FRAMEWORK</span>
+            <h3>데이터 분석 기법 20종 구성 매트릭스</h3>
+            <span class="tech-subtitle">시계열 및 기업 비교 데이터 분석을 위한 6대 영역별 20대 핵심 방법론</span>
+          </div>
+        </div>
+        <table class="strategy-table">
+          <thead>
+            <tr>
+              <th style="width: 15%;">분석 영역</th>
+              <th style="width: 8%;">번호</th>
+              <th style="width: 25%;">분석 기법 명칭</th>
+              <th style="width: 27%;">통계/수학 공식 및 분석 메커니즘</th>
+              <th style="width: 25%;">핵심 도출 결론</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td rowspan="4" style="font-weight:700; color:var(--text-highlight);">1. 기초통계 & 종합성과</td>
+              <td>01</td><td>기술통계 및 5수치 분포 요약</td><td>Mean, Std, Median, IQR, Skewness, Kurtosis</td><td>한빛(고변동 우상향), 미래(안정형), 새봄(저변동 정체)</td>
+            </tr>
+            <tr>
+              <td>02</td><td>연평균 복합 성장률 (CAGR & YoY)</td><td>$CAGR = (V_{end}/V_{beg})^{1/n} - 1$</td><td>한빛 +15.2% 고속질주 vs 새봄 -2.4% 역성장</td>
+            </tr>
+            <tr>
+              <td>03</td><td>매출 변동성 및 샤프 유사 안정성 지수</td><td>$CV = \sigma/\mu$, Sharpe-Proxy $= CAGR / CV$</td><td>한빛 성장 효율 0.69 최고, 새봄 음수(-0.22)</td>
+            </tr>
+            <tr>
+              <td>04</td><td>누적 매출 궤적 및 골든크로스</td><td>Cumulative Revenue $\sum X_t$</td><td>2022년 3Q 한빛테크가 새봄산업 누적 역전</td>
+            </tr>
+            <tr>
+              <td rowspan="4" style="font-weight:700; color:#10B981;">2. 추세평활 & 시계열분해</td>
+              <td>05</td><td>다중 이동평균 (SMA 3M/6M/12M)</td><td>$SMA_k(t) = \frac{1}{k}\sum_{i=0}^{k-1} X_{t-i}$</td><td>계절 노이즈 제거 후 한빛 단조 증가, 새봄 단조 감소</td>
+            </tr>
+            <tr>
+              <td>06</td><td>고전적 시계열 가법 분해</td><td>$Y_t = Trend_t + Seasonal_t + Residual_t$</td><td>순수 기저 추세와 12개월 계절 진폭의 수학적 분리</td>
+            </tr>
+            <tr>
+              <td>07</td><td>지수이동평균 (EMA 6M vs 12M)</td><td>$\alpha = 2/(N+1)$, MACD-like Spread</td><td>한빛 지속적 골든크로스 모멘텀 유지</td>
+            </tr>
+            <tr>
+              <td>08</td><td>호드릭-프레스콧 (HP) 필터 경기 순환 갭</td><td>$\min \sum (y_t - g_t)^2 + \lambda \sum (\Delta^2 g_t)^2$</td><td>12~14개월 주기의 미니 순환 확장/수축 갭 규명</td>
+            </tr>
+            <tr>
+              <td rowspan="4" style="font-weight:700; color:#F59E0B;">3. 계절성 & 주기성 분석</td>
+              <td>09</td><td>12개월 월별 계절 지수 (Base 100)</td><td>$SI_m = (\bar{X}_m / \bar{X}) \times 100$</td><td>한빛(봄 피크 109%), 미래·새봄(겨울 피크 117~119%)</td>
+            </tr>
+            <tr>
+              <td>10</td><td>연도×월 매트릭스 계절 히트맵</td><td>60개월 2차원 그리드 정규화 렌더링</td><td>연도별 레벨업과 월별 성수기 패턴의 시각적 검증</td>
+            </tr>
+            <tr>
+              <td>11</td><td>분기별 실적 분할 및 워터폴 분석</td><td>Quarterly Aggregation & YoY Contribution</td><td>새봄 Q4 편중(31%) vs 한빛 사계절 균형 성장</td>
+            </tr>
+            <tr>
+              <td>12</td><td>자기상관함수 (ACF Lag 1~12) 검정</td><td>$r_k = \frac{\sum(X_t-\mu)(X_{t+k}-\mu)}{\sum(X_t-\mu)^2}$</td><td>Lag 1 관성과 Lag 12 연간 계절성 통계적 유의성 확정</td>
+            </tr>
+            <tr>
+              <td rowspan="4" style="font-weight:700; color:#8B5CF6;">4. 기업비교 & 시장구조</td>
+              <td>13</td><td>피어슨 및 스피어만 상관계수 행렬</td><td>$r_{xy} = \frac{Cov(X,Y)}{\sigma_X \sigma_Y}$</td><td>한빛-미래 강한 동조(+0.87) vs 한빛-새봄 대체(-0.23)</td>
+            </tr>
+            <tr>
+              <td>14</td><td>동적 시장 점유율 (Market Share) 전이</td><td>$Share_i(t) = Sales_i(t) / Total(t)$</td><td>한빛 35.8%→46.8% 독점, 새봄 36.7%→24.7% 추락</td>
+            </tr>
+            <tr>
+              <td>15</td><td>허핀달-허쉬만 지수 (HHI) 시장집중도</td><td>$HHI = \sum (s_i)^2$</td><td>3,420 → 3,680pt로 상승하며 시장 독점화 가속</td>
+            </tr>
+            <tr>
+              <td>16</td><td>기준 시점 상대 지수화 (2021.01=100)</td><td>$Indexed_t = (X_t / X_{2021.01}) \times 100$</td><td>규모 편차 제거 시 한빛 205p 폭등 vs 새봄 100p 원점</td>
+            </tr>
+            <tr>
+              <td rowspan="2" style="font-weight:700; color:#EF4444;">5. 리스크 & 이상치 탐지</td>
+              <td>17</td><td>Z-Score 기반 통계적 이상치 감지</td><td>$Z = (X_t - \mu)/\sigma$, $|Z| \ge 1.96$</td><td>한빛 '25년 상반기 급등 이상치, 미래 '25년 연말 서지</td>
+            </tr>
+            <tr>
+              <td>18</td><td>최대 낙폭 (MDD) 및 언더워터 리스크</td><td>$DD_t = (X_t - Peak_t)/Peak_t$</td><td>한빛 MDD -27.3%(빠른 회복) vs 새봄 -32.8%(미회복)</td>
+            </tr>
+            <tr>
+              <td rowspan="2" style="font-weight:700; color:#06B6D4;">6. 예측모델 & 미래시나리오</td>
+              <td>19</td><td>선형 회귀 추세선 및 $R^2$ 적합도</td><td>$Y = \beta_0 + \beta_1 t + \epsilon$</td><td>한빛 월 +0.162억 증가($R^2=0.88$), 새봄 월 -0.024억 감소</td>
+            </tr>
+            <tr>
+              <td>20</td><td>홀트-윈터스 2026년 예측 및 몬테카를로</td><td>Level + Trend + Season + Bootstrap CI</td><td>2026년 한빛 223.4억(+14.1%) vs 새봄 100.8억(100억 위태)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         TAB: CATEGORY 1 (TECH 01 ~ 04)
+         ===================================================================== -->
+    <section id="tab-cat1" class="tab-content-section">
+      <div class="section-intro-banner">
+        <h2>📊 1. 기초 통계 및 종합 성과 분석 (Techniques 01 ~ 04)</h2>
+        <p>3개 기업 매출의 중심 경향성, 분산, 왜도, 연평균 성장률(CAGR), 리스크-수익 효율성, 누적 마일스톤을 다각도로 평가합니다.</p>
+      </div>
+
+      <div class="cards-grid">
+        <!-- Tech 01: Descriptive Stats -->
+        <div class="tech-card">
+          <div class="tech-card-header">
+            <div class="tech-title-wrap">
+              <span class="tech-num-badge">TECH 01</span>
+              <h3>기술통계 5수치 요약 & 분포 검정</h3>
+              <span class="tech-subtitle">평균, 중위수, 분산, 왜도, IQR을 통한 데이터 기초 성격 규명</span>
+            </div>
+            <span class="tech-formula-tag">$\mu, \sigma, Q_1, Q_2, Q_3, Skew$</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartTech01"></canvas>
+          </div>
+          <div class="tech-metrics-row" id="metricsTech01">
+            <!-- Dynamically populated -->
+          </div>
+          <div class="tech-insight-box">
+            <div class="insight-item">
+              <span class="insight-tag tag-finding">핵심 발견</span>
+              한빛테크의 평균 매출은 12.56억(표준편차 2.76, 왜도 +0.36)으로 3사 중 가장 높고 범위(7.69~18.27억)가 넓습니다. 새봄산업은 평균 9.06억에 표준편차 0.96으로 가장 좁은 분포(IQR 1.41)를 보입니다.
+            </div>
+            <div class="insight-item">
+              <span class="insight-tag tag-meaning">통계적 해석</span>
+              한빛테크는 강력한 성장으로 인해 분포의 우측 꼬리가 길며, 새봄산업은 표준편차가 작아 안정적으로 보이나 이는 '낮은 수준에서의 정체'를 의미하는 통계적 착시(Low Volatility Trap)입니다.
+            </div>
+          </div>
+        </div>
+
+        <!-- Tech 02: CAGR -->
+        <div class="tech-card">
+          <div class="tech-card-header">
+            <div class="tech-title-wrap">
+              <span class="tech-num-badge">TECH 02</span>
+              <h3>연평균 복합 성장률 (CAGR) 및 YoY 모멘텀</h3>
+              <span class="tech-subtitle">5개년 기간 누적 성장률 및 연도별 전년비 성장률 비교</span>
+            </div>
+            <span class="tech-formula-tag">$CAGR = (V_{2025}/V_{2021})^{1/4} - 1$</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartTech02"></canvas>
+          </div>
+          <div class="tech-metrics-row">
+            <div class="tech-metric-chip">
+              <span class="chip-label">한빛테크 5Y CAGR</span>
+              <span class="chip-val" style="color:var(--color-hanbit);">+15.20%</span>
+            </div>
+            <div class="tech-metric-chip">
+              <span class="chip-label">미래솔루션 5Y CAGR</span>
+              <span class="chip-val" style="color:var(--color-mirae);">+8.74%</span>
+            </div>
+            <div class="tech-metric-chip">
+              <span class="chip-label">새봄산업 5Y CAGR</span>
+              <span class="chip-val" style="color:var(--color-danger);">-2.35%</span>
+            </div>
+          </div>
+          <div class="tech-insight-box">
+            <div class="insight-item">
+              <span class="insight-tag tag-finding">핵심 발견</span>
+              한빛테크는 매년 14~16% 수준의 균일하고 높은 YoY 성장세를 유지하며 5개년 복합 +15.2% 성장했습니다. 반면 새봄산업은 4년 연속 마이너스 성장(-1.5% ~ -3.2%)을 보였습니다.
+            </div>
+            <div class="insight-item">
+              <span class="insight-tag tag-action">전략적 시사점</span>
+              복리의 위력으로 인해 5년 만에 한빛테크의 연매출은 111.1억에서 195.7억으로 약 85억원 순증한 반면, 새봄산업은 113.8억에서 103.5억으로 10억원 감소했습니다.
+            </div>
+          </div>
+        </div>
+
+        <!-- Tech 03: Volatility & Sharpe-Proxy -->
+        <div class="tech-card">
+          <div class="tech-card-header">
+            <div class="tech-title-wrap">
+              <span class="tech-num-badge">TECH 03</span>
+              <h3>매출 변동성 및 샤프 유사 안정성 지수</h3>
+              <span class="tech-subtitle">변동계수(CV) 대비 성장률의 효율성 및 하방 위험도(Downside Risk)</span>
+            </div>
+            <span class="tech-formula-tag">Efficiency Ratio = CAGR / CV</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartTech03"></canvas>
+          </div>
+          <div class="tech-metrics-row">
+            <div class="tech-metric-chip">
+              <span class="chip-label">한빛 효율지수</span>
+              <span class="chip-val" style="color:var(--color-hanbit);">0.69 (최우수)</span>
+            </div>
+            <div class="tech-metric-chip">
+              <span class="chip-label">미래 효율지수</span>
+              <span class="chip-val" style="color:var(--color-mirae);">0.57 (안정)</span>
+            </div>
+            <div class="tech-metric-chip">
+              <span class="chip-label">새봄 효율지수</span>
+              <span class="chip-val" style="color:var(--color-danger);">-0.22 (열위)</span>
+            </div>
+          </div>
+          <div class="tech-insight-box">
+            <div class="insight-item">
+              <span class="insight-tag tag-meaning">통계적 해석</span>
+              한빛테크는 변동계수(21.96%)가 크지만 이는 급격한 우상향 성장에 따른 '좋은 변동성'입니다. 하방 편차(Downside Deviation) 대비 성장률을 평가한 효율 지표에서 0.69로 압도적 1위를 기록했습니다.
+            </div>
+          </div>
+        </div>
+
+        <!-- Tech 04: Cumulative Revenue -->
+        <div class="tech-card">
+          <div class="tech-card-header">
+            <div class="tech-title-wrap">
+              <span class="tech-num-badge">TECH 04</span>
+              <h3>누적 매출 궤적 및 골든크로스 마일스톤</h3>
+              <span class="tech-subtitle">5개년 누적 총액 전개 및 기업 간 누적 역전 시점 포착</span>
+            </div>
+            <span class="tech-formula-tag">$Cumulative_t = \sum_{i=1}^t Sales_i$</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartTech04"></canvas>
+          </div>
+          <div class="tech-metrics-row">
+            <div class="tech-metric-chip">
+              <span class="chip-label">한빛 누적총액</span>
+              <span class="chip-val" style="color:var(--color-hanbit);">753.5 억</span>
+            </div>
+            <div class="tech-metric-chip">
+              <span class="chip-label">새봄 누적총액</span>
+              <span class="chip-val" style="color:var(--color-saebom);">543.7 억</span>
+            </div>
+            <div class="tech-metric-chip">
+              <span class="chip-label">미래 누적총액</span>
+              <span class="chip-val" style="color:var(--color-mirae);">510.3 억</span>
+            </div>
+          </div>
+          <div class="tech-insight-box">
+            <div class="insight-item">
+              <span class="insight-tag tag-finding">핵심 발견</span>
+              2021년 초 새봄산업이 1위였으나, 2022년 8월(20개월차)에 한빛테크가 새봄산업의 누적 매출을 앞지르는 역사적 골든크로스를 형성했습니다. 미래솔루션 또한 2025년 말 새봄산업과의 누적 격차를 33.4억원으로 좁혔습니다.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         TAB: CATEGORY 2 (TECH 05 ~ 08)
+         ===================================================================== -->
+    <section id="tab-cat2" class="tab-content-section">
+      <div class="section-intro-banner">
+        <h2>📈 2. 추세 평활화 및 시계열 분해 (Techniques 05 ~ 08)</h2>
+        <p>월별 계절 노이즈를 필터링하여 순수한 기저 추세(Trend)를 분리하고, 지수평활 및 거시 HP 필터를 통해 경기 순환 국면을 진단합니다.</p>
+      </div>
+
+      <div class="cards-grid">
+        <!-- Tech 05: Moving Average -->
+        <div class="tech-card">
+          <div class="tech-card-header">
+            <div class="tech-title-wrap">
+              <span class="tech-num-badge">TECH 05</span>
+              <h3>다중 이동평균(SMA 3M / 6M / 12M) 필터링</h3>
+              <span class="tech-subtitle">단기·중기·장기 이동평균을 통한 기저 펀더멘털 추세선 추출</span>
+            </div>
+            <span class="tech-formula-tag">$SMA_{12} = \frac{1}{12}\sum_{i=0}^{11} X_{t-i}$</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartTech05"></canvas>
+          </div>
+          <div class="tech-insight-box">
+            <div class="insight-item">
+              <span class="insight-tag tag-meaning">통계적 해석</span>
+              SMA 12M(12개월 이동평균)은 1년 단위의 계절성을 완전히 상쇄합니다. 한빛테크의 SMA 12M선은 2021년 9.26억에서 2025년 16.31억으로 단 한 번의 꺾임 없는 견고한 직선형 우상향을 증명합니다.
+            </div>
+          </div>
+        </div>
+
+        <!-- Tech 06: Time-Series Decomposition -->
+        <div class="tech-card">
+          <div class="tech-card-header">
+            <div class="tech-title-wrap">
+              <span class="tech-num-badge">TECH 06</span>
+              <h3>고전적 시계열 가법 분해 (Additive Decomposition)</h3>
+              <span class="tech-subtitle">매출 = 장기 추세(Trend) + 12M 계절성(Seasonal) + 잔차(Residual)</span>
+            </div>
+            <span class="tech-formula-tag">$Y_t = T_t + S_t + R_t$</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartTech06"></canvas>
+          </div>
+          <div class="tech-insight-box">
+            <div class="insight-item">
+              <span class="insight-tag tag-finding">핵심 발견</span>
+              한빛테크의 계절 성분($S_t$)은 봄철(3~5월)에 약 +1.15억원의 추가 매출을 발생시키고 가을철(9~10월)에 -1.68억원의 하락을 유발합니다. 잔차(Residual)의 분산은 전체의 4.2% 미만으로 모형의 설명력이 극히 우수합니다.
+            </div>
+          </div>
+        </div>
+
+        <!-- Tech 07: EMA & Spread -->
+        <div class="tech-card">
+          <div class="tech-card-header">
+            <div class="tech-title-wrap">
+              <span class="tech-num-badge">TECH 07</span>
+              <h3>지수이동평균(EMA 6M vs 12M) 및 모멘텀 스프레드</h3>
+              <span class="tech-subtitle">최신 데이터 가중 지수평활 및 단·중기 이격도 오실레이터</span>
+            </div>
+            <span class="tech-formula-tag">$EMA_t = \alpha X_t + (1-\alpha)EMA_{t-1}$</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartTech07"></canvas>
+          </div>
+          <div class="tech-insight-box">
+            <div class="insight-item">
+              <span class="insight-tag tag-action">전략적 시사점</span>
+              EMA 스프레드(단기-중기 이격)가 양수로 확대될 때가 신규 채용 및 설비 투자의 최적기이며, 한빛테크는 매년 1~5월 구간마다 스프레드가 +0.8억 이상으로 강력히 벌어지는 확장 사이클을 반복합니다.
+            </div>
+          </div>
+        </div>
+
+        <!-- Tech 08: HP Filter -->
+        <div class="tech-card">
+          <div class="tech-card-header">
+            <div class="tech-title-wrap">
+              <span class="tech-num-badge">TECH 08</span>
+              <h3>호드릭-프레스콧(HP) 필터 경기 순환 갭</h3>
+              <span class="tech-subtitle">장기 잠재 추세($\tau_t$)와 단기 경기 순환 변동($c_t$)의 계량 분리</span>
+            </div>
+            <span class="tech-formula-tag">$\lambda = 14,400$ (월별 거시 표준)</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartTech08"></canvas>
+          </div>
+          <div class="tech-insight-box">
+            <div class="insight-item">
+              <span class="insight-tag tag-meaning">통계적 해석</span>
+              잠재 추세를 초과하는 Cyclical Gap이 +영역이면 경기 과열/호황 국면, -영역이면 수축 국면입니다. 한빛테크는 2023년 및 2025년 상반기에 +2.0억원 안팎의 대형 호황 갭을 기록했습니다.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         TAB: CATEGORY 3 (TECH 09 ~ 12)
+         ===================================================================== -->
+    <section id="tab-cat3" class="tab-content-section">
+      <div class="section-intro-banner">
+        <h2>🗓️ 3. 계절성 및 주기성 분석 (Techniques 09 ~ 12)</h2>
+        <p>1월부터 12월까지의 월별 계절 지수(Base 100), 5개년 연도×월 매트릭스 히트맵, 분기별 기여도, 자기상관함수(ACF)를 통해 주기성을 정밀 검증합니다.</p>
+      </div>
+
+      <div class="cards-grid">
+        <!-- Tech 09: Seasonal Index -->
+        <div class="tech-card">
+          <div class="tech-card-header">
+            <div class="tech-title-wrap">
+              <span class="tech-num-badge">TECH 09</span>
+              <h3>12개월 월별 계절 지수 (Seasonal Index, Base 100)</h3>
+              <span class="tech-subtitle">연평균 대비 각 월의 매출 강도 (100 초과 = 성수기, 미만 = 비수기)</span>
+            </div>
+            <span class="tech-formula-tag">$SI_m = (\bar{X}_m / \bar{X}_{all}) \times 100$</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartTech09"></canvas>
+          </div>
+          <div class="tech-insight-box">
+            <div class="insight-item">
+              <span class="insight-tag tag-finding">핵심 발견</span>
+              <strong>극명한 계절성 대조:</strong> 한빛테크는 봄철(3~5월, 최고 109.5%)에 매출이 집중되고 10월(86.4%)에 최저를 기록하는 반면, 새봄산업은 12월(119.4%), 11월(112.9%), 1월(110.0%)의 극단적인 겨울 성수기 패턴을 보입니다.
+            </div>
+          </div>
+        </div>
+
+        <!-- Tech 10: Heatmap -->
+        <div class="tech-card">
+          <div class="tech-card-header">
+            <div class="tech-title-wrap">
+              <span class="tech-num-badge">TECH 10</span>
+              <h3>연도 × 월 매트릭스 계절 히트맵 (Heatmap Matrix)</h3>
+              <span class="tech-subtitle">5개년 60개월 2차원 그리드 색상 강도 정규화 렌더링</span>
+            </div>
+            <span class="tech-formula-tag">Matrix: $5 \times 12$ Cells</span>
+          </div>
+          <div class="heatmap-table-container" id="heatmapContainer">
+            <!-- Dynamically populated -->
+          </div>
+          <div class="tech-insight-box">
+            <div class="insight-item">
+              <span class="insight-tag tag-meaning">통계적 해석</span>
+              히트맵 상에서 한빛테크는 가로축(월)의 3~5월 피크 밴드와 세로축(연도)의 전반적 채도 상승이 결합된 형태를 띠며, 새봄산업은 연도가 지날수록 전체 타일의 채도가 옅어지는 구조적 쇠퇴를 시각적으로 보여줍니다.
+            </div>
+          </div>
+        </div>
+
+        <!-- Tech 11: Quarterly Waterfall -->
+        <div class="tech-card">
+          <div class="tech-card-header">
+            <div class="tech-title-wrap">
+              <span class="tech-num-badge">TECH 11</span>
+              <h3>분기별 실적 분할 및 전년 동기 대비(YoY) 워터폴</h3>
+              <span class="tech-subtitle">Q1~Q4 분기 합산 매출 추이 및 연간 실적 견인 분기 분석</span>
+            </div>
+            <span class="tech-formula-tag">Quarterly Aggregation ($Q_1 \sim Q_4$)</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartTech11"></canvas>
+          </div>
+          <div class="tech-insight-box">
+            <div class="insight-item">
+              <span class="insight-tag tag-action">전략적 시사점</span>
+              새봄산업은 4분기 비중이 연간 실적의 31.2%를 차지할 정도로 편중되어 있어, 3분기(19.8%) 비수기 운영자금 압박에 대한 유동성 관리 전략이 필수적입니다.
+            </div>
+          </div>
+        </div>
+
+        <!-- Tech 12: Autocorrelation Function (ACF) -->
+        <div class="tech-card">
+          <div class="tech-card-header">
+            <div class="tech-title-wrap">
+              <span class="tech-num-badge">TECH 12</span>
+              <h3>자기상관함수 (ACF) 지연 주기성 검정</h3>
+              <span class="tech-subtitle">Lag 1부터 Lag 12까지의 시계열 관성 및 1년 주기 통계적 유의성</span>
+            </div>
+            <span class="tech-formula-tag">$95\% \text{ CI} = \pm 1.96/\sqrt{N} = \pm 0.253$</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartTech12"></canvas>
+          </div>
+          <div class="tech-insight-box">
+            <div class="insight-item">
+              <span class="insight-tag tag-meaning">통계적 해석</span>
+              Lag 1의 자기상관계수는 한빛 0.873, 미래 0.791, 새봄 0.684로 모두 신뢰구간(0.253)을 크게 상회합니다. 또한 Lag 12에서 3사 모두 강한 스파이크(0.58~0.73)를 형성하여 12개월 주기의 강력한 연간 계절성을 학술적으로 입증합니다.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         TAB: CATEGORY 4 (TECH 13 ~ 16)
+         ===================================================================== -->
+    <section id="tab-cat4" class="tab-content-section">
+      <div class="section-intro-banner">
+        <h2>🔄 4. 기업 간 상호 비교 및 시장 구조 (Techniques 13 ~ 16)</h2>
+        <p>3개사 간 상관관계 행렬, 시장 점유율의 동적 전이, 허핀달-허쉬만(HHI) 시장 집중도 지수, 기준시점 상대 지수화를 분석합니다.</p>
+      </div>
+
+      <div class="cards-grid">
+        <!-- Tech 13: Correlation Matrix -->
+        <div class="tech-card">
+          <div class="tech-card-header">
+            <div class="tech-title-wrap">
+              <span class="tech-num-badge">TECH 13</span>
+              <h3>피어슨 및 스피어만 상관계수 행렬</h3>
+              <span class="tech-subtitle">기업 간 동조화(Co-movement) vs 시장 대체(Cannibalization) 분석</span>
+            </div>
+            <span class="tech-formula-tag">$r = \frac{\sum (x-\bar{x})(y-\bar{y})}{\sqrt{\sum (x-\bar{x})^2 \sum (y-\bar{y})^2}}$</span>
+          </div>
+          <div id="corrTableContainer">
+            <!-- Dynamically populated table -->
+          </div>
+          <div class="tech-insight-box">
+            <div class="insight-item">
+              <span class="insight-tag tag-finding">핵심 발견</span>
+              한빛테크와 미래솔루션은 상관계수 <strong>+0.871</strong>로 매우 높은 정(+)의 상관을 보이며 시장 확대의 수혜를 공유합니다. 반면 한빛테크와 새봄산업은 <strong>-0.226</strong>의 음(-)의 상관을 보여 한빛테크의 성장이 새봄산업의 고객을 잠식하고 있음을 시사합니다.
+            </div>
+          </div>
+        </div>
+
+        <!-- Tech 14: Dynamic Market Share -->
+        <div class="tech-card">
+          <div class="tech-card-header">
+            <div class="tech-title-wrap">
+              <span class="tech-num-badge">TECH 14</span>
+              <h3>동적 시장 점유율 (SOM) 전이 및 구조 변화</h3>
+              <span class="tech-subtitle">3사 합산 시장 대비 월별 점유율(%)의 시계열 구조적 역전</span>
+            </div>
+            <span class="tech-formula-tag">Market Share % (100% Stacked Area)</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartTech14"></canvas>
+          </div>
+          <div class="tech-insight-box">
+            <div class="insight-item">
+              <span class="insight-tag tag-finding">핵심 발견</span>
+              2021년 1월 기준 시장점유율은 새봄(39.3%) > 한빛(33.2%) > 미래(27.5%) 순이었으나, 2025년 12월에는 한빛(44.5%) > 미래(29.8%) > 새봄(25.7%)으로 순위가 완전히 역전되었습니다.
+            </div>
+          </div>
+        </div>
+
+        <!-- Tech 15: HHI Index -->
+        <div class="tech-card">
+          <div class="tech-card-header">
+            <div class="tech-title-wrap">
+              <span class="tech-num-badge">TECH 15</span>
+              <h3>허핀달-허쉬만 지수 (HHI) 시장 집중도</h3>
+              <span class="tech-subtitle">공정거래 기준 과점화 척도 ($<1,500$ 경쟁, $1,500\sim2,500$ 보통, $>2,500$ 고과점)</span>
+            </div>
+            <span class="tech-formula-tag">$HHI = \sum_{i=1}^3 (s_i)^2$</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartTech15"></canvas>
+          </div>
+          <div class="tech-insight-box">
+            <div class="insight-item">
+              <span class="insight-tag tag-meaning">통계적 해석</span>
+              HHI는 2021년 평균 3,421pt에서 2025년 3,680pt로 259pt 상승했습니다. 기존 3사 균점 체제에서 한빛테크의 1강 체제로 시장 지배력이 집중되면서 가격 결정력이 한빛테크로 이전되고 있습니다.
+            </div>
+          </div>
+        </div>
+
+        <!-- Tech 16: Indexed Growth -->
+        <div class="tech-card">
+          <div class="tech-card-header">
+            <div class="tech-title-wrap">
+              <span class="tech-num-badge">TECH 16</span>
+              <h3>기준 시점 상대 지수화 (Indexed Growth, 2021.01 = 100)</h3>
+              <span class="tech-subtitle">초기 규모 편차를 소거한 순수 성장 배수 궤적 비교</span>
+            </div>
+            <span class="tech-formula-tag">$Index_t = (X_t / X_{2021.01}) \times 100$</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartTech16"></canvas>
+          </div>
+          <div class="tech-insight-box">
+            <div class="insight-item">
+              <span class="insight-tag tag-action">전략적 시사점</span>
+              5개년 동안 한빛테크는 지수 205.0p(2.05배 성장)를 기록한 반면, 새봄산업은 지수 100.0p로 5년 전 수준에 정체되었습니다. 미래솔루션은 166.2p로 꾸준한 확장세를 입증했습니다.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         TAB: CATEGORY 5 (TECH 17 ~ 18)
+         ===================================================================== -->
+    <section id="tab-cat5" class="tab-content-section">
+      <div class="section-intro-banner">
+        <h2>⚠️ 5. 리스크 및 이상치 탐지 (Techniques 17 ~ 18)</h2>
+        <p>통계적 신뢰구간을 벗어난 이상치(Anomaly/Outlier)를 감지하고, 직전 고점 대비 최대 낙폭(MDD)과 회복 탄력성을 진단합니다.</p>
+      </div>
+
+      <div class="cards-grid">
+        <!-- Tech 17: Z-score Anomaly Detection -->
+        <div class="tech-card">
+          <div class="tech-card-header">
+            <div class="tech-title-wrap">
+              <span class="tech-num-badge">TECH 17</span>
+              <h3>Z-Score 기반 통계적 이상치(Anomaly) 자동 감지</h3>
+              <span class="tech-subtitle">평균 대비 표준편차 $\pm 1.96\sigma$ (95% 신뢰구간) 초과 이벤트 탐지</span>
+            </div>
+            <span class="tech-formula-tag">$Z_t = (X_t - \mu)/\sigma, |Z| \ge 1.96$</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartTech17"></canvas>
+          </div>
+          <div class="tech-insight-box">
+            <div class="insight-item">
+              <span class="insight-tag tag-finding">핵심 발견</span>
+              한빛테크의 경우 2025년 3월(18.27억, Z=+2.07) 및 4월(18.14억, Z=+2.02)에 상방 이상치가 감지되었습니다. 이는 단순 계절성을 뛰어넘는 강력한 신규 제품 출시 또는 대형 프로젝트 수주 이벤트가 발생했음을 시사합니다.
+            </div>
+          </div>
+        </div>
+
+        <!-- Tech 18: Maximum Drawdown -->
+        <div class="tech-card">
+          <div class="tech-card-header">
+            <div class="tech-title-wrap">
+              <span class="tech-num-badge">TECH 18</span>
+              <h3>최대 낙폭 (MDD: Maximum Drawdown) 언더워터 분석</h3>
+              <span class="tech-subtitle">역대 최고점(Peak) 대비 하락률 궤적 및 원금/고점 회복 기간</span>
+            </div>
+            <span class="tech-formula-tag">$DD_t = (X_t - Peak_t) / Peak_t \times 100\%$</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartTech18"></canvas>
+          </div>
+          <div class="tech-insight-box">
+            <div class="insight-item">
+              <span class="insight-tag tag-meaning">통계적 해석</span>
+              한빛테크의 MDD는 -27.3%이나 매년 4~6개월 이내에 전고점을 돌파하는 우수한 회복 탄력성을 보였습니다. 반면 새봄산업은 2021년 12월 최고점(11.33억) 이후 현재까지 -32.8%의 지속적 언더워터 상태에 갇혀 있습니다.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         TAB: CATEGORY 6 (TECH 19 ~ 20)
+         ===================================================================== -->
+    <section id="tab-cat6" class="tab-content-section">
+      <div class="section-intro-banner">
+        <h2>🔮 6. 예측 모델 및 미래 시나리오 (Techniques 19 ~ 20)</h2>
+        <p>통계적 선형 회귀 추세선의 결정계수($R^2$) 검정과 홀트-윈터스 지수평활법 및 몬테카를로 신뢰구간(P10/P50/P90)을 통해 2026년 실적을 전망합니다.</p>
+      </div>
+
+      <div class="cards-grid">
+        <!-- Tech 19: Linear Regression -->
+        <div class="tech-card">
+          <div class="tech-card-header">
+            <div class="tech-title-wrap">
+              <span class="tech-num-badge">TECH 19</span>
+              <h3>단변량 선형 회귀 추세선 및 결정계수($R^2$) 검정</h3>
+              <span class="tech-subtitle">월별 증가 기울기(Slope), 절편 및 통계적 유의확률(p-value)</span>
+            </div>
+            <span class="tech-formula-tag">$Y = \beta_0 + \beta_1 t + \epsilon, R^2$</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartTech19"></canvas>
+          </div>
+          <div class="tech-metrics-row">
+            <div class="tech-metric-chip">
+              <span class="chip-label">한빛 기울기 / R²</span>
+              <span class="chip-val" style="color:var(--color-hanbit);">+0.162억 / 0.880</span>
+            </div>
+            <div class="tech-metric-chip">
+              <span class="chip-label">미래 기울기 / R²</span>
+              <span class="chip-val" style="color:var(--color-mirae);">+0.068억 / 0.706</span>
+            </div>
+            <div class="tech-metric-chip">
+              <span class="chip-label">새봄 기울기 / R²</span>
+              <span class="chip-val" style="color:var(--color-danger);">-0.024억 / 0.161</span>
+            </div>
+          </div>
+          <div class="tech-insight-box">
+            <div class="insight-item">
+              <span class="insight-tag tag-meaning">통계적 해석</span>
+              한빛테크의 회귀 결정계수는 $R^2 = 0.880$($p < 0.0001$)로 시계열 변동의 88%가 매월 1,620만원씩 증가하는 선형 추세로 설명됩니다. 새봄산업은 매월 약 240만원씩 통계적으로 유의미하게 감소하는 음의 기울기($p = 0.0015$)를 가집니다.
+            </div>
+          </div>
+        </div>
+
+        <!-- Tech 20: Holt-Winters & Monte Carlo -->
+        <div class="tech-card">
+          <div class="tech-card-header">
+            <div class="tech-title-wrap">
+              <span class="tech-num-badge">TECH 20</span>
+              <h3>홀트-윈터스 2026년 예측 & 몬테카를로 신뢰구간</h3>
+              <span class="tech-subtitle">트리플 지수평활 12개월 전망 및 1,000회 시뮬레이션 확률 밴드 (P10 ~ P90)</span>
+            </div>
+            <span class="tech-formula-tag">Triple Exponential Smoothing (Level+Trend+Season)</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartTech20"></canvas>
+          </div>
+          <div class="tech-metrics-row">
+            <div class="tech-metric-chip">
+              <span class="chip-label">한빛 '26 예측 (P50)</span>
+              <span class="chip-val" style="color:var(--color-hanbit);">223.4 억 (+14.1%)</span>
+            </div>
+            <div class="tech-metric-chip">
+              <span class="chip-label">미래 '26 예측 (P50)</span>
+              <span class="chip-val" style="color:var(--color-mirae);">127.8 억 (+7.1%)</span>
+            </div>
+            <div class="tech-metric-chip">
+              <span class="chip-label">새봄 '26 예측 (P50)</span>
+              <span class="chip-val" style="color:var(--color-danger);">100.8 억 (-2.6%)</span>
+            </div>
+          </div>
+          <div class="tech-insight-box">
+            <div class="insight-item">
+              <span class="insight-tag tag-action">전략적 시사점</span>
+              2026년 한빛테크는 연매출 220억 돌파가 유력하며(신뢰구간 205.1~241.8억), 새봄산업은 100억원 방어선이 위협받고 있습니다. 보수적 P10 시나리오 시 93.4억원까지 하락할 위험이 있어 구조조정이나 M&A 검토가 필요합니다.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         TAB: STRATEGIC REPORT
+         ===================================================================== -->
+    <section id="tab-strategy" class="tab-content-section">
+      <div class="report-panel">
+        <h2>📑 3개사 5개년 데이터 분석 종합 평가 및 경영 전략 제언 리포트</h2>
+        
+        <div class="company-report-grid">
+          <!-- Hanbit Tech Report -->
+          <div class="company-report-card hanbit">
+            <div class="report-card-title">
+              <h3>한빛테크 (Hanbit Tech)</h3>
+              <span class="report-badge">고성장 스케일업</span>
+            </div>
+            <ul class="report-metric-list">
+              <li>5개년 누적 매출: <strong>753.5 억원</strong></li>
+              <li>연평균 복합 성장률 (CAGR): <strong style="color:var(--color-hanbit);">+15.20%</strong></li>
+              <li>시장 점유율 변화: <strong>35.8% → 46.8% (+11.0%p)</strong></li>
+              <li>성수기 패턴: <strong>3~5월 봄철 피크 (109.5%)</strong></li>
+              <li>2026년 예측 총매출: <strong>223.4 억원 (P50)</strong></li>
+            </ul>
+            <p class="report-desc-text">
+              2021년 2위로 출발했으나 매년 15% 안팎의 폭발적인 복리 성장을 통해 시장 점유율 46.8%의 절대 강자로 등극했습니다. 봄철 성수기 집중도가 뚜렷하며, 가을 비수기(9~10월) 하락을 상쇄할 하반기 신규 라인업 확보가 요구됩니다.
+            </p>
+            <div class="report-actions">
+              <h4>권고 전략 (Action Plan)</h4>
+              <p>• 가을 비수기 방어를 위한 프로모션 및 B2B 장기 공급계약 체결<br>• 생산 용량(CAPA) 증설을 통한 2026년 220억 돌파 수요 선제 대응</p>
+            </div>
+          </div>
+
+          <!-- Mirae Solution Report -->
+          <div class="company-report-card mirae">
+            <div class="report-card-title">
+              <h3>미래솔루션 (Mirae Solution)</h3>
+              <span class="report-badge">안정 성장형</span>
+            </div>
+            <ul class="report-metric-list">
+              <li>5개년 누적 매출: <strong>510.3 억원</strong></li>
+              <li>연평균 복합 성장률 (CAGR): <strong style="color:var(--color-mirae);">+8.74%</strong></li>
+              <li>시장 점유율 변화: <strong>27.5% → 28.5% (+1.0%p)</strong></li>
+              <li>성수기 패턴: <strong>11~12월 연말 피크 (116.8%)</strong></li>
+              <li>2026년 예측 총매출: <strong>127.8 억원 (P50)</strong></li>
+            </ul>
+            <p class="report-desc-text">
+              변동계수 15.3%의 가장 모범적인 안정적 우상향 곡선을 유지하고 있습니다. 연말 공공/기업 예산 집행에 따른 12월 매출 급증 특성을 보이며, 한빛테크와의 양의 상관관계(+0.87)를 바탕으로 시장 동반 성장의 과실을 누리고 있습니다.
+            </p>
+            <div class="report-actions">
+              <h4>권고 전략 (Action Plan)</h4>
+              <p>• 여름철(7~8월) 비수기 유휴 자원을 활용한 신제품 연구개발(R&D)<br>• 2026년 새봄산업 누적 매출 완전 역전을 위한 공격적 영업 채널 확대</p>
+            </div>
+          </div>
+
+          <!-- Saebom Industry Report -->
+          <div class="company-report-card saebom">
+            <div class="report-card-title">
+              <h3>새봄산업 (Saebom Industry)</h3>
+              <span class="report-badge">성숙/구조조정형</span>
+            </div>
+            <ul class="report-metric-list">
+              <li>5개년 누적 매출: <strong>543.7 억원</strong></li>
+              <li>연평균 복합 성장률 (CAGR): <strong style="color:var(--color-danger);">-2.35%</strong></li>
+              <li>시장 점유율 변화: <strong>36.7% → 24.7% (-12.0%p)</strong></li>
+              <li>성수기 패턴: <strong>12~1월 동절기 피크 (119.4%)</strong></li>
+              <li>2026년 예측 총매출: <strong>100.8 억원 (P50)</strong></li>
+            </ul>
+            <p class="report-desc-text">
+              2021년 업계 1위였으나 주력 제품의 성숙기 도달과 한빛테크의 잠식으로 4년 연속 역성장하며 3위로 추락했습니다. 겨울철(11~1월)에만 매출이 반짝하는 계절 편중이 극심하여, 봄/여름철 고정비 부담이 가중되고 있습니다.
+            </p>
+            <div class="report-actions">
+              <h4>권고 전략 (Action Plan)</h4>
+              <p>• 한계 제품군 라인 정리 및 비수기 하계 신규 카테고리 피보팅<br>• 100억원 붕괴 방어를 위한 긴급 원가 절감 및 유통망 구조개혁</p>
+            </div>
+          </div>
+        </div>
+
+        <h3 style="margin-bottom: 14px; font-size:1.15rem;">📌 전사적 통합 경영 전략 권고안</h3>
+        <table class="strategy-table">
+          <thead>
+            <tr>
+              <th>구분</th>
+              <th>주요 현상 및 분석 근거</th>
+              <th>경영진 의사결정 권고안</th>
+              <th>목표 KPI</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>시장 독과점 심화</strong></td>
+              <td>HHI 3,680pt 진입, 한빛테크 점유율 46.8% 장악</td>
+              <td>한빛테크의 프리미엄화 전략 및 시장 표준화 선도, 경쟁사 M&A 또는 전략적 제휴 검토</td>
+              <td>2026년 한빛 점유율 50% 돌파</td>
+            </tr>
+            <tr>
+              <td><strong>계절성 미스매치 활용</strong></td>
+              <td>한빛(봄철 피크) vs 미래·새봄(겨울철 피크) 상호 보완</td>
+              <td>계절성이 상반되는 기업 간 공동 물류망 구축 또는 비수기 상호 ODM/외주 생산을 통한 CAPA 최적화</td>
+              <td>비수기 공장 가동률 +15% 향상</td>
+            </tr>
+            <tr>
+              <td><strong>새봄산업 출구 전략</strong></td>
+              <td>CAGR -2.35%, 2026년 100억 미만 추락 위험(P10 93.4억)</td>
+              <td>기존 현금 창출력(Cash Cow)을 바탕으로 동절기 특화 프리미엄 틈새시장으로 사업 구조 전환</td>
+              <td>연매출 105억 선 방어 및 영업이익률 개선</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="dashboard-footer">
+      <p>가상기업 3개 5개년매출데이터 (2).xlsx 분석 대시보드 · 100% Client-Side Pure HTML/CSS/JS Engine</p>
+      <p style="margin-top: 4px; font-size: 0.76rem;">데이터 외부 전송 없음 (Zero External Leakage) · 빌드 프레임워크 없는 독립 웹 애플리케이션</p>
+    </footer>
+
+  </div>
+
+  <!-- Data Script (Pre-calculated master dataset) -->
+  <script src="data.js"></script>
+  <!-- Application Script -->
+  <script src="app.js"></script>
+</body>
+</html>
